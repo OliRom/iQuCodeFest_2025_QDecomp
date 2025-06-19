@@ -93,7 +93,13 @@ class PlayerSlot:
         result = job.result()
         counts = result.get_counts()
 
-        return int(list(counts.keys())[0][:para.num_qubits], 2)
+        value = int(list(counts.keys())[0][:para.num_qubits], 2)
+
+        # Reinitialize the circuit after the measurement to continue the game
+        self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
+        self.set_state(value)
+
+        return value
 
     def set_state(self, state: int) -> None:
         """
