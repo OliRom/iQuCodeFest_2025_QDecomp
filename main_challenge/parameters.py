@@ -2,9 +2,9 @@ num_qubits = 3  # Number of qubits in the quantum circuit
 
 num_qubits = 3
 
-state_prob = 0.35  # Probability to have the qubit in the state |0>
+state_prob = 0.30  # Probability to have the qubit in the state |0>
 
-measurement_prob = 0.1  # Probability to have a measurement operation
+measurement_prob = 0.20  # Probability to have a measurement operation
 
 operation_prob = 1 - state_prob - measurement_prob  # Probability to have an operation
 
