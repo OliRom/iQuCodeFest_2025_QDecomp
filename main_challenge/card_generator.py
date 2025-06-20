@@ -67,6 +67,3 @@ def generate_state() -> int:
 
 def generate_measurement():
     return random.randint(0, param.num_qubits - 1)
-
-
-print(generate_card())

@@ -1,3 +1,4 @@
+num_qubits = 3  # Number of qubits in the quantum circuit
 
 num_qubits = 3
 
