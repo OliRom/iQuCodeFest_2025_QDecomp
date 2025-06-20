@@ -13,6 +13,7 @@ class PlayerSlot:
         Initializes the PlayerSlot with a quantum circuit.
         """
         self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
+        last_measure = None
     
     def apply_operator(self, operator: list[str]) -> None:
         """
@@ -45,6 +46,8 @@ class PlayerSlot:
             else:
                 method = getattr(self.qc, gate_name.lower())
                 method(i)
+        
+        self.last_measure = None
 
     def measure(self, nb) -> int:
         """
@@ -80,22 +83,24 @@ class PlayerSlot:
         Returns:
             int: The measured state of the player slot.
         """
-        self.qc.measure_all()
+        if self.last_measure is None:
+            self.qc.measure_all()
         
-        # Simulate the circuit to get the measurement result
-        simulator = AerSimulator()
-        new_circuit = transpile(self.qc, simulator)
-        job = simulator.run(new_circuit, shots=1)
-        result = job.result()
-        counts = result.get_counts()
+            # Simulate the circuit to get the measurement result
+            simulator = AerSimulator()
+            new_circuit = transpile(self.qc, simulator)
+            job = simulator.run(new_circuit, shots=1)
+            result = job.result()
+            counts = result.get_counts()
 
-        value = int(list(counts.keys())[0][:para.num_qubits], 2)
+            value = int(list(counts.keys())[0][:para.num_qubits], 2)
+            self.last_measure = value
 
-        # Reinitialize the circuit after the measurement to continue the game
-        self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
-        self.set_state(value)
+            # Reinitialize the circuit after the measurement to continue the game
+            self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
+            self.set_state(value)
 
-        return value
+        return self.last_measure
 
     def set_state(self, state: int) -> None:
         """
@@ -109,6 +114,7 @@ class PlayerSlot:
 
         self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
         self.qc.initialize(initial_state, range(para.num_qubits))
+        self.last_measure = None
 
     def plot_circuit(self) -> None:
         """
