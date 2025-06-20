@@ -13,7 +13,7 @@ class PlayerSlot:
         Initializes the PlayerSlot with a quantum circuit.
         """
         self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
-        last_measure = None
+        self.last_measure = None
     
     def apply_operator(self, operator: list[str]) -> None:
         """
@@ -27,6 +27,7 @@ class PlayerSlot:
             target = operator.index("X")
             control = operator.index("C")
             self.qc.cx(control, target)
+            self.last_measure = None
             return
         
         # SWAP gate
@@ -36,6 +37,7 @@ class PlayerSlot:
             self.qc.cx(qubit1, qubit2)
             self.qc.cx(qubit2, qubit1)
             self.qc.cx(qubit1, qubit2)
+            self.last_measure = None
             return
         
         # Single qubit gates
