@@ -68,8 +68,6 @@ class PlayerSlot:
         statevector = result.get_statevector(new_circuit)
         measured_bit = list(result.get_counts().keys())[0][-nb-1]
 
-        print(statevector)
-
         # Reinitialize the circuit with the statevector AFTER the partial measurement to continue the game
         self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
         self.qc.initialize(statevector, range(para.num_qubits))
@@ -111,6 +109,7 @@ class PlayerSlot:
         initial_state = [0] * 2**para.num_qubits
         initial_state[state] = 1
 
+        self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
         self.qc.initialize(initial_state, range(para.num_qubits))
 
     def plot_circuit(self) -> None:
