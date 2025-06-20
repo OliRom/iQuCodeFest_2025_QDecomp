@@ -27,6 +27,7 @@ class PlayerSlot:
             target = operator.index("X")
             control = operator.index("C")
             self.qc.cx(control, target)
+            self.last_measure = None
             return
         
         # SWAP gate
@@ -36,6 +37,7 @@ class PlayerSlot:
             self.qc.cx(qubit1, qubit2)
             self.qc.cx(qubit2, qubit1)
             self.qc.cx(qubit1, qubit2)
+            self.last_measure = None
             return
         
         # Single qubit gates
