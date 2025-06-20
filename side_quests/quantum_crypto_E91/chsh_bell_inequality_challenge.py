@@ -146,15 +146,17 @@ def create_classical_random_state() -> QuantumCircuit:
                         classical (separable) state.
     """
 
-    angles = [random.uniform(0, 2 * np.pi) for _ in range(4)]  # Random angles for each qubit
+    angles = [random.uniform(0, 2 * np.pi) for _ in range(6)]  # Random angles for each qubit
     qc = QuantumCircuit(2)
     
-    qc.ry(angles[0], 0) 
-    qc.rz(angles[1], 0) 
-   
-    qc.ry(angles[2], 1) 
-    qc.rz(angles[3], 1) 
+    qc.rz(angles[0], 0) 
+    qc.ry(angles[1], 0) 
+    qc.rz(angles[2], 0) 
 
+    qc.rz(angles[3], 1) 
+    qc.ry(angles[4], 1) 
+    qc.rz(angles[5], 1) 
+    
     # TODO: Student implementation goes here
     return qc
 
@@ -183,9 +185,8 @@ def create_eavesdropped_state(bell_qc: QuantumCircuit = None) -> QuantumCircuit:
     new_state = [0 for _ in range(4)]
     new_state[int(result, 2)] = 1
     output = QuantumCircuit(2)  # Return a new circuit with two qubits in a separable state
-    output.initialize(new_state, [0, 1])  # Initialize the qubits to the measured state
+    output.initialize(new_state)  # Initialize the qubits to the measured state
     return output
-    
     
 
 # --------------------------------------------------------
@@ -220,7 +221,7 @@ def apply_basis_transformation(circuit: QuantumCircuit, qubit_index: int, basis:
     """
     import math
     # TODO: Student implementation goes here
-    circuit.ry(-math.radians(int(basis)), qubit_index)  # Apply Ry rotation to the specified qubit
+    circuit.ry(-math.radians(int(basis)), qubit_index)
     return circuit
 
 
@@ -247,7 +248,7 @@ def measure_bell_pair(
     circuit = apply_basis_transformation(circuit, 0, alice_basis)
     circuit = apply_basis_transformation(circuit, 1, bob_basis) 
     circuit.measure_all()  # Measure both qubits in the specified bases   
-    result = run_circuit(circuit, shots=1)  # Run the circuit with 1 shot
+    result = run_circuit(circuit)  # Run the circuit with 1 shot
     
     return list(result.keys())[0] 
     
@@ -373,7 +374,6 @@ def calculate_correlations(
     return correlations
 
 
-
 def calculate_chsh_value(
     correlations: dict[tuple[str, str], float],
     alice_bases: list[str] = ALICE_BELL_BASES,
@@ -394,12 +394,12 @@ def calculate_chsh_value(
         float: The calculated CHSH Bell parameter S (absolute value).
     """
     # TODO: Student implementation goes here
-    E_a1_b1 = correlations.get((alice_bases[0], bob_bases[0]), 0.0)
-    E_a1_b2 = correlations.get((alice_bases[0], bob_bases[1]), 0.0)
-    E_a2_b1 = correlations.get((alice_bases[1], bob_bases[0]), 0.0)
-    E_a2_b2 = correlations.get((alice_bases[1], bob_bases[1]), 0.0)
+    E_a1_b1 = correlations[(alice_bases[0], bob_bases[0])]
+    E_a1_b2 = correlations[(alice_bases[0], bob_bases[1])]
+    E_a2_b1 = correlations[(alice_bases[1], bob_bases[0])]
+    E_a2_b2 = correlations[(alice_bases[1], bob_bases[1])]
     chsh_value = E_a1_b1 - E_a1_b2 + E_a2_b1 + E_a2_b2
-    return abs(chsh_value)  # Return the absolute value of the CHSH parameter S
+    return abs(chsh_value) 
     
 
 
@@ -443,27 +443,26 @@ def run_bell_test(
 
     print(f"\nTest: {name}")
 
-    results_list, alice_bases_list, bob_bases_list = run_bell_test_measurements(
-        list_circuits, list_alice_bases=alice_bases, list_bob_bases=bob_bases)
+    results_list, alice_bases_list, bob_bases_list = run_bell_test_measurements(list_circuits)
 
-    bell_results = organize_measurements_by_basis(results_list, alice_bases_list, bob_bases_list)
+    organized_results = organize_measurements_by_basis(results_list, alice_bases_list, bob_bases_list)
 
-    correlations = calculate_correlations(bell_results)
+    correlations = calculate_correlations(organized_results)
 
-    bell_chsh = calculate_chsh_value(correlations=correlations)
+    chsh_value = calculate_chsh_value(correlations)
 
-    print(f"CHSH value: {bell_chsh:.4f}")
+    print(f"CHSH value: {chsh_value:.4f}")
 
-    verdict = 'Quantum entanglement detected!' if check_bell_inequality(bell_chsh) else 'No quantum correlations'
+    verdict = 'Quantum entanglement detected!' if check_bell_inequality(chsh_value) else 'No quantum correlations'
 
     print(f"Verdict: {verdict}")
 
     # Visualization
-    visualize_bell_test_results(correlations, bell_chsh, title=f"Bell Test Results: {name}")
+    visualize_bell_test_results(correlations, chsh_value, title=f"Bell Test Results: {name}")
     plt.savefig(f"bell_state_results_{name}.png")
     plt.show()
 
-    return bell_chsh
+    return chsh_value
 
 
 def demonstrate_bell_inequality():
@@ -480,18 +479,21 @@ def demonstrate_bell_inequality():
     print("Running Bell test with different states...\n")
     # --------------------------------------------------------
     # TODO: Student implementation goes here
+
+    num_bell_pairs = 1000  # Number of Bell pairs to test
+
     # TODO: only create the list of circuits, the rest is already implemented
 
     # Test 1: Ideal entangled Bell state
     print("Test 1: Ideal Bell state |Ψ-⟩ = (|01⟩ - |10⟩)/√2  - Singlet state used in original E91")
-    list_bell_circuits = [create_bell_pair_singlet_state() for _ in range(100)] # TODO
+    list_bell_circuits = [create_bell_pair_singlet_state() for _ in range(num_bell_pairs)] # TODO
     
     run_bell_test(list_bell_circuits, "Ideal Bell state")
 
     # --------------------------------------------------------
     # Test 2: Classical (non-entangled) state
     print("\nTest 2: Classical state (no entanglement)")
-    list_classical_circuits = [create_classical_random_state() for _ in range(100)] # TODO
+    list_classical_circuits = [create_classical_random_state() for _ in range(num_bell_pairs)] # TODO
     
     run_bell_test(list_classical_circuits, "Classical state")
 
@@ -501,12 +503,10 @@ def demonstrate_bell_inequality():
     print(f"Eve compromises {EVE_PERCENTAGE_COMPROMISED*100}% of Bell pairs, reducing the Bell parameter.")
     
     list_eve_circuits = []
-    for _ in range(100):
+    for _ in range(num_bell_pairs):
         if random.random() < EVE_PERCENTAGE_COMPROMISED:
-            # If Eve compromises this Bell pair, create a classical state instead
-            list_eve_circuits.append(create_eavesdropped_state(create_classical_random_state()))
+            list_eve_circuits.append(create_eavesdropped_state(create_bell_pair_singlet_state()))
         else:
-            # Otherwise, keep the original Bell pair
             list_eve_circuits.append(create_bell_pair_singlet_state())
     
     run_bell_test(list_eve_circuits, "Eavesdropped state")

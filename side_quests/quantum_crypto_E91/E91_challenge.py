@@ -188,9 +188,9 @@ def measure_all_pairs(
     
     # TODO: Student implementation goes here
     # Hint: Use function from bell module
-    for i, pair in enumerate(bell_pairs):
+    for bell_pair, alice_base, bob_base in zip(bell_pairs, alice_bases, bob_bases):
 
-        results.append(bell.measure_bell_pair(pair, alice_bases[i], bob_bases[i]))
+        results.append(bell.measure_bell_pair(bell_pair, alice_base, bob_base))
 
     return results
 
@@ -234,6 +234,7 @@ def extract_e91_key_and_bell_test_data(
 
         if alice_base == bob_base:
             key_results.append(result[0])
+
         elif (alice_base, bob_base) in chsh_basis_pairs:
             chsh_results.append(result)
             chsh_alice_bases.append(alice_base)
@@ -269,10 +270,11 @@ def check_for_eavesdropping(
     """
     # TODO: Student implementation goes here
     # Hint: Use function from bell module
-    measurements = bell.organize_measurements_by_basis(chsh_results, chsh_alice_bases, chsh_bob_bases)
-    correlations = bell.calculate_correlations(measurements)
-    bell_chsh_value = bell.calculate_chsh_value(correlations, chsh_alice_bases, chsh_bob_bases) # change this    
-    is_secure = bell_chsh_value > 2  # Bell inequality violation check
+    measurements_counts = bell.organize_measurements_by_basis(chsh_results, chsh_alice_bases, chsh_bob_bases)
+    correlations = bell.calculate_correlations(measurements_counts)
+    bell_chsh_value = bell.calculate_chsh_value(correlations, ALICE_CHSH_BASES, BOB_CHSH_BASES) 
+
+    is_secure = bell_chsh_value > 2
 
     return {
         'chsh_value': bell_chsh_value,
@@ -311,7 +313,7 @@ def run_e91_protocol(
                 bell_pairs[i] = bell.create_eavesdropped_state(bell_pairs[i])
                 compromised_count += 1
         print(f"Compromised pairs: {compromised_count} out of {num_pairs}")        
-        print(f"Number of Bell pairs after eavesdropping: len(bell_pairs) : {len(bell_pairs)}")
+        print(f"Number of Bell pairs after eavesdropping: len(bell_pairs) : {num_pairs - compromised_count}")
     
     # Step 3: Generate random bases for Alice and Bob
     alice_bases = generate_random_bases(num_pairs, ALICE_BASES)
@@ -323,16 +325,18 @@ def run_e91_protocol(
     # Step 5: Sift results into key generation and CHSH Bell test data
     results = extract_e91_key_and_bell_test_data(measures, alice_bases, bob_bases)
     key_result = results['key_results']
-    chsh_result = results['chsh_results']
+
+    chsh_results = results['chsh_results']
     chsh_alice_bases = results['chsh_alice_bases']
     chsh_bob_bases = results['chsh_bob_bases']
 
     # Step 6: Perform the CHSH test to check for eavesdropping
-    chsh = check_for_eavesdropping(chsh_result, chsh_alice_bases, chsh_bob_bases)
+    chsh = check_for_eavesdropping(chsh_results, chsh_alice_bases, chsh_bob_bases)
+
     print(f"CHSH Bell test result: {chsh['chsh_value']}, is secure: {chsh['is_secure']}")
     # Step 7: If secure, extract and return the shared key
-    if chsh['is_secure'] and key_result:
-        return ''.join(key_result)
+    if chsh['is_secure']:
+        return ''.join(key_result)  # Join the key bits into a string
     
     return None
 
@@ -346,16 +350,19 @@ def decrypt_and_print_messages(key: str, filename: str = "encrypted_messages.txt
         filename (str): The file to read encrypted messages from.
     """
     print("\nDecrypting all messages from", filename)
-    
-    # TODO: Student implementation goes here
-    # Hint: Use enc.decrypt_xor_repeating_key from encryption_algorithms.py
-    enc.decrypt_xor_repeating_key()
+
+    with open(filename, "r", encoding="utf-8") as f:
+        for line in f:
+            encrypted = line.strip()
+            decrypted = enc.decrypt_xor_repeating_key(encrypted, key)
+            print("Decrypted:", decrypted)
+
     
 
 
 def main():
     # Run the E91 protocol
-    key = run_e91_protocol(num_pairs=150, eavesdropping=False)
+    key = run_e91_protocol(num_pairs=2000, eavesdropping=False)
     
     if key:
         # Example usage: encrypt a message with the key
@@ -377,7 +384,7 @@ def main():
         # For your challenge: must generate the correct key using the E91 protocol to decrypt the messages. Without the key, decryption is not feasible.
         print("\nDecrypting messages from file...")
         # TODO: change the path to the encrypted file as needed
-        path_to_encrypted_file = R"encrypted_messages.txt"
+        path_to_encrypted_file = R"side_quests\quantum_crypto_E91\encrypted_messages.txt"
         decrypt_and_print_messages(key, filename=path_to_encrypted_file)
         
     else:
