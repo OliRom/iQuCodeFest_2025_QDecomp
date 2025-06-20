@@ -184,9 +184,9 @@ def main():
         screen.fill(BG)
 
         # FRONT-FACING CARDS
-        draw_card_front(screen, ["H", "I", "X"], position=(100, 20), size=(180, 260), rotation=0, card_type="operator")
-        draw_card_front(screen, [None, None, "M"], position=(350, 50), size=(180, 260), rotation=10, card_type="measurement")
-        draw_card_front(screen, [0, 1, None], position=(600, 80), size=(180, 260), rotation=-10)
+        draw_card_front(screen, ["C", "I", "X"], position=(100, 20), size=(180, 260), rotation=0, card_type="operator")
+        draw_card_front(screen, ["M", None, None], position=(350, 50), size=(180, 260), rotation=0, card_type="measurement")
+        draw_card_front(screen, [1, None, None], position=(600, 80), size=(180, 260), rotation=0)
 
         # BACK-FACING CARDS
         draw_card_back(screen, bg_image, position=(120, 300), size=(180, 260), rotation=5)
