@@ -66,7 +66,12 @@ def draw_card_front(board_surface, bits, position, size, rotation=0, card_type="
     """
     width, height = size
     card_surface = pygame.Surface((width, height), pygame.SRCALPHA)
-    pygame.draw.rect(card_surface, CARD_COLOR, card_surface.get_rect().inflate(-20, -20), border_radius=20)
+    pygame.draw.rect(card_surface, CARD_COLOR, card_surface.get_rect(), border_radius=3)
+
+    if card_type == "Measurement":
+        list_empty = [None, None, None]
+        list_empty[bits] = "M"
+        bits = list_empty
 
     n = len(bits)
     radius = int(min(width, height) * 0.15)
@@ -166,7 +171,7 @@ def draw_card_back(board_surface, bg_image, position, size, rotation=0):
 
     scaled_img = pygame.transform.smoothscale(bg_image.copy(), (width, height))
 
-    apply_rounded_mask(scaled_img, border_radius=20)
+    # apply_rounded_mask(scaled_img, border_radius=20)
 
     rotated_img = pygame.transform.rotate(scaled_img, rotation)
     rotated_rect = rotated_img.get_rect(center=(position[0] + width // 2, position[1] + height // 2))

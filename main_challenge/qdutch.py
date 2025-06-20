@@ -1,19 +1,41 @@
 import pygame
 import sys
+import os
 
 from game_class import QDutch
+from card_renderer import draw_card_front, draw_card_back
 
 # --- Initialization ---
 pygame.init()
+
+# Get the directory where the running script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+SCREEN_SIZE = (900, 600)
+screen = pygame.display.set_mode(SCREEN_SIZE)
+pygame.display.set_caption("Modular Card Renderer")
+
+# Build the absolute path to the image file
+bg_image_path = os.path.join(SCRIPT_DIR, "assets/background.png")
+bg_image = pygame.image.load(bg_image_path).convert_alpha()
+
+measurement_img_path = os.path.join(SCRIPT_DIR, "assets/measure.png")
+measurement_img = pygame.image.load(measurement_img_path).convert_alpha()
 
 # --- Constants ---
 WIDTH, HEIGHT = 800, 600
 CARD_WIDTH, CARD_HEIGHT = 60, 90
 CARD_SPACING = 20
+font = pygame.font.SysFont("arial", 100, bold=False)
+
+# Colors
 BG_COLOR = (34, 139, 34)      # Green table
 BG_CARD_COLOR = (34, 100, 34)  # Light green for cards
 CARD_COLOR = (255, 255, 255)
-TEXT_COLOR = (0, 0, 0)
+TEXT_COLOR = (20, 20, 20)
+COLOR_TOP = pygame.Color(250, 128, 114)
+COLOR_BOTTOM = pygame.Color(255, 224, 230)
+HIDDEN_BASE = (180, 180, 180)
 
 # --- Pygame Setup ---
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -26,62 +48,62 @@ card_buttons = []
 center_buttons = []
 
 
-# --- Drawing Functions ---
-def draw_card(x, y, text, rotation, player, card_index):
-    # Create a transparent card surface
-    card_surf = pygame.Surface((CARD_WIDTH, CARD_HEIGHT), pygame.SRCALPHA)
-    card_surf.fill(CARD_COLOR)
-    pygame.draw.rect(card_surf, TEXT_COLOR, card_surf.get_rect(), 2)
-
-    # Render text onto the card surface
-    if text:
-        label = font.render(text, True, TEXT_COLOR)
-        label_rect = label.get_rect(center=(CARD_WIDTH // 2, CARD_HEIGHT // 2))
-        card_surf.blit(label, label_rect)
-
-    # Rotate entire surface (card + text)
-    rotated_surf = pygame.transform.rotate(card_surf, rotation)
-    rect = rotated_surf.get_rect(center=(x, y))
-
-    # Draw to main screen
-    screen.blit(rotated_surf, rect.topleft)
-
-    # Store clickable area
-    card_buttons.append((rect, player, card_index))
-
-
 def draw_table_with_states(players, show_states):
     screen.fill(BG_COLOR)
     card_buttons.clear()
 
-    def get_card_text(index, card_index):
-        if show_states and card_index < 2:
-            return str(players[index].hand[card_index].measure_all())
-        return ""
-
-    # Player 1
+    # --- Player 1 (Bottom) ---
     for i in range(4):
         x = WIDTH // 2 - 1.5 * (CARD_WIDTH + CARD_SPACING) + i * (CARD_WIDTH + CARD_SPACING)
         y = HEIGHT - CARD_HEIGHT - 40
-        draw_card(x, y, get_card_text(0, i), 0, 0, i)
+        rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
+        if show_states and i < 2:
+            value = players[0].hand[i].measure_all()
+            bits = list(f"{value:03b}")
+            draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 0)
+        else:
+            draw_card_back(screen, bg_image, (x, y), (CARD_WIDTH, CARD_HEIGHT), 0)
+        card_buttons.append((rect, 0, i))
 
-    # Player 3
+    # --- Player 3 (Top) ---
     for i in range(4):
         x = WIDTH // 2 + 1.5 * (CARD_WIDTH + CARD_SPACING) - i * (CARD_WIDTH + CARD_SPACING)
         y = 40 + CARD_HEIGHT // 2
-        draw_card(x, y, get_card_text(1, i), 180, 2, i)
+        rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
+        if show_states and i < 2:
+            value = players[2].hand[i].measure_all()
+            bits = list(f"{value:03b}")
+            draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 180)
+        else:
+            draw_card_back(screen, bg_image, (x, y), (CARD_WIDTH, CARD_HEIGHT), 180)
+        card_buttons.append((rect, 2, i))
 
-    # Player 2
+    # --- Player 2 (Left) ---
     for i in range(4):
         x = 40 + CARD_HEIGHT // 2
         y = HEIGHT // 2 - 1.5 * (CARD_WIDTH + CARD_SPACING) + i * (CARD_WIDTH + CARD_SPACING)
-        draw_card(x, y, get_card_text(2, i), 90, 1, i)
+        rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
+        if show_states and i < 2:
+            value = players[1].hand[i].measure_all()
+            bits = list(f"{value:03b}")
+            draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 270)
+        else:
+            draw_card_back(screen, bg_image, (x, y), (CARD_WIDTH, CARD_HEIGHT), 270)
+        card_buttons.append((rect, 1, i))
 
-    # Player 4
+    # --- Player 4 (Right) ---
     for i in range(4):
-        x = WIDTH - 40 - CARD_HEIGHT // 2
+        x = WIDTH - 60 - CARD_HEIGHT // 2
         y = HEIGHT // 2 + 1.5 * (CARD_WIDTH + CARD_SPACING) - i * (CARD_WIDTH + CARD_SPACING)
-        draw_card(x, y, get_card_text(3, i), 270, 3, i)
+        rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
+        if show_states and i < 2:
+            value = players[3].hand[i].measure_all()
+            bits = list(f"{value:03b}")
+            draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 90)
+        else:
+            draw_card_back(screen, bg_image, (x, y), (CARD_WIDTH, CARD_HEIGHT), 90)
+        card_buttons.append((rect, 3, i))
+
 
 def draw_center_elements():
     center_buttons.clear()
@@ -115,10 +137,10 @@ def draw_player_labels(show_states, current_player_no):
     label_font = pygame.font.SysFont(None, 28)
 
     player_positions = {
-        0: (WIDTH // 2, HEIGHT - 50),              # Bottom
-        1: (175, HEIGHT // 2 - 25),                      # Left
-        2: (WIDTH // 2, 20),                       # Top
-        3: (WIDTH - 125, HEIGHT // 2 - 25),              # Right
+        0: (WIDTH // 2 + 25, HEIGHT - 150),              # Bottom
+        1: (225, HEIGHT // 2 + 25),                      # Left
+        2: (WIDTH // 2 + 25, 200),                       # Top
+        3: (WIDTH - 125, HEIGHT // 2 + 25),              # Right
     }
 
     for i in range(4):
@@ -194,6 +216,8 @@ def main():
     measured_card_value = None
     measured_target = None
     pending_player_done = False
+    card1_preview = None
+    card2_preview = None
 
     while True:
         # --- Game end condition ---
@@ -219,10 +243,10 @@ def main():
             if target_player == 0:  # Bottom
                 x = WIDTH // 2 - 1.5 * (CARD_WIDTH + CARD_SPACING) + target_card_index * (CARD_WIDTH + CARD_SPACING)
                 y = HEIGHT - CARD_HEIGHT - 40
-            elif target_player == 1:  # Top
+            elif target_player == 2:  # Top
                 x = WIDTH // 2 + 1.5 * (CARD_WIDTH + CARD_SPACING) - target_card_index * (CARD_WIDTH + CARD_SPACING)
                 y = 40 + CARD_HEIGHT // 2
-            elif target_player == 2:  # Left
+            elif target_player == 1:  # Left
                 x = 40 + CARD_HEIGHT // 2
                 y = HEIGHT // 2 - 1.5 * (CARD_WIDTH + CARD_SPACING) + target_card_index * (CARD_WIDTH + CARD_SPACING)
             elif target_player == 3:  # Right
@@ -230,8 +254,10 @@ def main():
                 y = HEIGHT // 2 + 1.5 * (CARD_WIDTH + CARD_SPACING) - target_card_index * (CARD_WIDTH + CARD_SPACING)
 
             # Draw the state value above the card
-            label = font.render(str(measured_card_value), True, (255, 0, 0))  # Red for clarity
-            screen.blit(label, label.get_rect(center=(x, y - CARD_HEIGHT // 2 - 10)))
+            value_int = game.apply_operator_card(target_player, target_card_index, selected_card)
+            bits = [None, None, None]
+            bits[selected_card.data] = value_int
+            draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT),  0)
 
             pygame.display.flip()
 
@@ -242,7 +268,6 @@ def main():
                     sys.exit()
                 elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     measured_card_displayed = False
-                    measured_card_value = None
                     measured_target = None
                     if pending_player_done:
                         player_done = True
@@ -256,6 +281,20 @@ def main():
             draw_center_elements()
         else:
             draw_start_message()
+        
+        if drew_from_deck and not selected_card and card1_preview and card2_preview:
+            # Coordinates for temporary card preview
+            x1 = WIDTH // 2 - CARD_WIDTH - 10
+            x2 = WIDTH // 2 + 10
+            y = HEIGHT // 2 - CARD_HEIGHT // 2
+            bits1 = card1_preview.data
+            bits2 = card2_preview.data
+            if card1_preview.type == "State":
+                bits1 = list(f"{bits1:03b}")
+            if card2_preview.type == "State":
+                bits2 = list(f"{bits2:03b}")
+            draw_card_front(screen, bits1, (x1+135, y), (CARD_WIDTH, CARD_HEIGHT), 0, card_type=card1_preview.type)
+            draw_card_front(screen, bits2, (x2+135, y), (CARD_WIDTH, CARD_HEIGHT), 0, card_type=card2_preview.type)
 
         draw_player_labels(show_states, player_no)
 
@@ -290,18 +329,23 @@ def main():
 
                             if not drew_from_deck and label == "deck":
                                 card1, card2 = game.draw_cards()
-                                print("Deck clicked")
-                                print(f"Card 1: {card1}, Card 2: {card2}")
+                                card1_preview = card1
+                                card2_preview = card2
                                 drew_from_deck = True
+                                print(f"Card 1: {card1}, Card 2: {card2}")
 
                             elif drew_from_deck and not selected_card:
                                 if label == "card 1":
-                                    print("Card 1 clicked")
                                     selected_card = card1
+                                    card1_preview = None
+                                    card2_preview = None
+                                    print("Card 1 clicked")
                                 elif label == "card 2":
-                                    print("Card 2 clicked")
                                     selected_card = card2
-                                can_click_player_cards = True
+                                    card1_preview = None
+                                    card2_preview = None
+                                    print("Card 2 clicked")
+                            can_click_player_cards = True
 
                     # --- Player card clicks ---
                     if can_click_player_cards:
@@ -310,19 +354,20 @@ def main():
                                 print(f"Player {player + 1} clicked card {card_index + 1}")
                                 
                                 if selected_card.type == "Measurement":
-                                    measured_card_value = players[player].hand[card_index].measure(selected_card.data)
+                                    measured_card_value = game.apply_operator_card(player, card_index, selected_card)
                                     measured_target = (player, card_index)
                                     measured_card_displayed = True
                                     pending_player_done = True
                                     can_click_player_cards = False
                                     break
-
                                 elif selected_card.type == "Operator":
+                                    game.apply_operator_card(player, card_index, selected_card)
                                     player_done = True
                                     break
 
                                 elif selected_card.type == "State":
                                     if player == player_no:
+                                        game.apply_state_card(card_index, selected_card)
                                         player_done = True
                                         break
                                     else:
@@ -332,6 +377,7 @@ def main():
         # --- End-of-turn update ---
         if player_done:
             player_no = (player_no + 1) % 4
+            game.next_player()
             if player_no == 0:
                 turn_no += 1
 
