@@ -113,7 +113,6 @@ class QDutch:
         """
         temp_list = [(player, self.get_score(player)) for player in self.players]
         temp_list.sort(key=lambda x: x[1])
-        print(temp_list)
 
         ranking_list = [[player.name, player.calculate_points(), i+1] for i, (player, _) in enumerate(temp_list)]
         for i in range(1, len(ranking_list)):
