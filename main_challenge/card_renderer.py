@@ -1,10 +1,19 @@
 import pygame
 import sys
+import os
 
 pygame.init()
+
+# Get the directory where the running script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Build the absolute path to the image file
+bg_image_path = os.path.join(SCRIPT_DIR, "background.png")
+
 SCREEN_SIZE = (900, 600)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("Modular Card Renderer")
+bg_image = pygame.image.load("background.png").convert_alpha()
 
 # Colors
 BG = (0, 0, 0)
@@ -78,6 +87,15 @@ def draw_card(board_surface, bits, position, size, rotation=0):
     rotated_rect = rotated_surface.get_rect(center=(position[0] + width // 2, position[1] + height // 2))
     board_surface.blit(rotated_surface, rotated_rect.topleft)
 
+def draw_card_back(board_surface, bg_image, position, size, rotation=0):
+    width, height = size
+    # Scale and rotate the already loaded image
+    scaled_img = pygame.transform.smoothscale(bg_image, (width, height))
+    rotated_bg = pygame.transform.rotate(scaled_img, rotation)
+    rotated_rect = rotated_bg.get_rect(center=(position[0] + width // 2, position[1] + height // 2))
+
+    board_surface.blit(rotated_bg, rotated_rect.topleft)
+
 
 # --------------------
 # Example usage
@@ -87,9 +105,13 @@ def main():
     while running:
         screen.fill(BG)
 
+        # FRONT-FACING CARDS
         draw_card(screen, [1, None, 0], position=(100, 20), size=(180, 260), rotation=0)
-        draw_card(screen, [None, 1, 1], position=(350, 50), size=(180, 260), rotation=180)
-        draw_card(screen, [0, 1, None], position=(600, 80), size=(180, 260), rotation=-90)
+        draw_card(screen, [None, 1, 1], position=(350, 50), size=(180, 260), rotation=15)
+        draw_card(screen, [0, 1, None], position=(600, 80), size=(180, 260), rotation=-10)
+
+        # BACK-FACING CARDS
+        draw_card_back(screen, bg_image, position=(200, 350), size=(180, 260), rotation=5)
 
         pygame.display.flip()
 
@@ -99,6 +121,7 @@ def main():
 
     pygame.quit()
     sys.exit()
+
 
 if __name__ == "__main__":
     main()
