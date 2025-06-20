@@ -57,8 +57,6 @@ class PlayerSlot:
         # To be able to retrieve the state and continue the game after the measurement
         self.qc.save_statevector()
 
-        self.plot_circuit()
-
         simulator = AerSimulator(method="statevector")
         new_circuit = transpile(self.qc, simulator)
         job = simulator.run(new_circuit, shots=1)
