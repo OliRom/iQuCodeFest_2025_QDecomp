@@ -158,7 +158,9 @@ def create_list_bell_pairs(num_pairs: int) -> list[QuantumCircuit]:
     """
     # TODO: Student implementation goes here
     # Hint: Use function from bell module
-    pass
+    bell_pairs = [bell.create_bell_pair_singlet_state() for _ in range(num_pairs)]
+    return bell_pairs
+    
 
 def measure_all_pairs(
     bell_pairs: list[QuantumCircuit],
@@ -186,6 +188,9 @@ def measure_all_pairs(
     
     # TODO: Student implementation goes here
     # Hint: Use function from bell module
+    for i, pair in enumerate(bell_pairs):
+
+        results.append(bell.measure_bell_pair(pair, alice_bases[i], bob_bases[i]))
 
     return results
 
@@ -225,6 +230,15 @@ def extract_e91_key_and_bell_test_data(
     chsh_bob_bases:list[str] = []
 
     # TODO: Student implementation goes here
+    for alice_base, bob_base, result in zip(alice_bases, bob_bases, results):
+
+        if alice_base == bob_base:
+            key_results.append(result[0])
+        elif (alice_base, bob_base) in chsh_basis_pairs:
+            chsh_results.append(result)
+            chsh_alice_bases.append(alice_base)
+            chsh_bob_bases.append(bob_base)
+
 
     return {
         'key_results': key_results,
@@ -255,9 +269,10 @@ def check_for_eavesdropping(
     """
     # TODO: Student implementation goes here
     # Hint: Use function from bell module
-
-    bell_chsh_value = None # change this    
-    is_secure = None # change this
+    measurements = bell.organize_measurements_by_basis(chsh_results, chsh_alice_bases, chsh_bob_bases)
+    correlations = bell.calculate_correlations(measurements)
+    bell_chsh_value = bell.calculate_chsh_value(correlations, chsh_alice_bases, chsh_bob_bases) # change this    
+    is_secure = bell_chsh_value > 2  # Bell inequality violation check
 
     return {
         'chsh_value': bell_chsh_value,
@@ -280,45 +295,46 @@ def run_e91_protocol(
         str | None: The generated shared secret key as a string of '0's and '1's if the
                     protocol is successful and secure. Returns None if the security check
                     fails or if no key bits are generated.
-
-    Steps:
-        1. Generate Bell pairs.
-        2. Optionally simulate eavesdropping by compromising a percentage of pairs.
-        3. Randomly assign measurement bases to Alice and Bob.
-        4. Measure all pairs and record results.
-        5. Sift results into key generation and CHSH Bell test data.
-        6. Perform the CHSH test to check for eavesdropping.
-        7. If secure, extract and return the shared key.
     """
-    # TODO: Student implementation goes here
-
     print(f"Generate Bell pairs...")
 
-    # Create a list of identical Bell pairs
+    # Step 1: Create a list of identical Bell pairs
     bell_pairs = create_list_bell_pairs(num_pairs)
-
     print(f"Number of Bell pairs: len(bell_pairs) : {len(bell_pairs)}")
 
-    # Simulate eavesdropping if requested
+    # Step 2: Simulate eavesdropping if requested
     if eavesdropping:
         print(f"Simulate Eavesdropping: ")
-        
-        # nb of pairs compromised
-        compromised_count = None # change this
-        
-        
-        bell_pairs = None # change this
-
+        compromised_count = 0
+        for i in range(num_pairs):
+            if random.random() < EVE_PERCENTAGE_COMPROMISED:
+                bell_pairs[i] = bell.create_eavesdropped_state(bell_pairs[i])
+                compromised_count += 1
         print(f"Compromised pairs: {compromised_count} out of {num_pairs}")        
         print(f"Number of Bell pairs after eavesdropping: len(bell_pairs) : {len(bell_pairs)}")
     
-    # Generate random bases for Alice and Bob : Set available bases using angle notation consistently
+    # Step 3: Generate random bases for Alice and Bob
     alice_bases = generate_random_bases(num_pairs, ALICE_BASES)
     bob_bases = generate_random_bases(num_pairs, BOB_BASES)
 
-    # TODO ... 
+    # Step 4: Measure all pairs and record results
+    measures = measure_all_pairs(bell_pairs, alice_bases, bob_bases)
+
+    # Step 5: Sift results into key generation and CHSH Bell test data
+    results = extract_e91_key_and_bell_test_data(measures, alice_bases, bob_bases)
+    key_result = results['key_results']
+    chsh_result = results['chsh_results']
+    chsh_alice_bases = results['chsh_alice_bases']
+    chsh_bob_bases = results['chsh_bob_bases']
+
+    # Step 6: Perform the CHSH test to check for eavesdropping
+    chsh = check_for_eavesdropping(chsh_result, chsh_alice_bases, chsh_bob_bases)
+    print(f"CHSH Bell test result: {chsh['chsh_value']}, is secure: {chsh['is_secure']}")
+    # Step 7: If secure, extract and return the shared key
+    if chsh['is_secure'] and key_result:
+        return ''.join(key_result)
     
-    return None # change this, return the key if secure, otherwise None
+    return None
 
 
 def decrypt_and_print_messages(key: str, filename: str = "encrypted_messages.txt"):
@@ -333,12 +349,13 @@ def decrypt_and_print_messages(key: str, filename: str = "encrypted_messages.txt
     
     # TODO: Student implementation goes here
     # Hint: Use enc.decrypt_xor_repeating_key from encryption_algorithms.py
+    enc.decrypt_xor_repeating_key()
     
 
 
 def main():
     # Run the E91 protocol
-    key = run_e91_protocol(num_pairs=2000, eavesdropping=True)
+    key = run_e91_protocol(num_pairs=150, eavesdropping=False)
     
     if key:
         # Example usage: encrypt a message with the key
