@@ -13,7 +13,7 @@ class PlayerSlot:
         Initializes the PlayerSlot with a quantum circuit.
         """
         self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
-        last_measure = None
+        self.last_measure = None
     
     def apply_operator(self, operator: list[str]) -> None:
         """
@@ -94,11 +94,11 @@ class PlayerSlot:
             counts = result.get_counts()
 
             value = int(list(counts.keys())[0][:para.num_qubits], 2)
-            self.last_measure = value
 
             # Reinitialize the circuit after the measurement to continue the game
             self.qc = QuantumCircuit(para.num_qubits, para.num_qubits)
             self.set_state(value)
+            self.last_measure = value
 
         return self.last_measure
 
