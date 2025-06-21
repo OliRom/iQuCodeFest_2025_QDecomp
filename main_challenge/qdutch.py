@@ -48,7 +48,7 @@ card_buttons = []
 center_buttons = []
 
 
-def draw_table_with_states(players, show_states):
+def draw_table_with_states(players, show_states, end_game_show_cards=False):
     screen.fill(BG_COLOR)
     card_buttons.clear()
 
@@ -57,7 +57,7 @@ def draw_table_with_states(players, show_states):
         x = WIDTH // 2 - 1.5 * (CARD_WIDTH + CARD_SPACING) + i * (CARD_WIDTH + CARD_SPACING)
         y = HEIGHT - CARD_HEIGHT - 40
         rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
-        if show_states and i < 2:
+        if show_states and i < 2 or end_game_show_cards:
             value = players[0].hand[i].measure_all()
             bits = list(f"{value:03b}")
             draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 0)
@@ -70,7 +70,7 @@ def draw_table_with_states(players, show_states):
         x = WIDTH // 2 + 1.5 * (CARD_WIDTH + CARD_SPACING) - i * (CARD_WIDTH + CARD_SPACING)
         y = 40 + CARD_HEIGHT // 2
         rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
-        if show_states and i < 2:
+        if show_states and i < 2 or end_game_show_cards:
             value = players[2].hand[i].measure_all()
             bits = list(f"{value:03b}")
             draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 180)
@@ -83,7 +83,7 @@ def draw_table_with_states(players, show_states):
         x = 40 + CARD_HEIGHT // 2
         y = HEIGHT // 2 - 1.5 * (CARD_WIDTH + CARD_SPACING) + i * (CARD_WIDTH + CARD_SPACING)
         rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
-        if show_states and i < 2:
+        if show_states and i < 2 or end_game_show_cards:
             value = players[1].hand[i].measure_all()
             bits = list(f"{value:03b}")
             draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 270)
@@ -96,7 +96,7 @@ def draw_table_with_states(players, show_states):
         x = WIDTH - 60 - CARD_HEIGHT // 2
         y = HEIGHT // 2 + 1.5 * (CARD_WIDTH + CARD_SPACING) - i * (CARD_WIDTH + CARD_SPACING)
         rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
-        if show_states and i < 2:
+        if show_states and i < 2 or end_game_show_cards:
             value = players[3].hand[i].measure_all()
             bits = list(f"{value:03b}")
             draw_card_front(screen, bits, (x, y), (CARD_WIDTH, CARD_HEIGHT), 90)
@@ -223,6 +223,12 @@ def main():
         # --- Game end condition ---
         if dutch_turn is not None and turn_no == dutch_turn + 1 and player_no == player_dutch:
             game.end_routine()
+            draw_table_with_states(players, show_states, True)
+            draw_player_labels(True, None)
+
+            pygame.display.flip()
+            pygame.time.delay(2000)  # Wait for 2 seconds to show the final state
+
             ranking = game.get_ranking()
             pygame.quit()
             show_ranking_screen(ranking, players)
