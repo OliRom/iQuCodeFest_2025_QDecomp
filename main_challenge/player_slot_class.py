@@ -29,6 +29,15 @@ class PlayerSlot:
             self.qc.cx(control, target)
             self.last_measure = None
             return
+
+        # H followed by a CNOT gate
+        if "HC" in operator:
+            qubit1 = operator.index("HC")
+            qubit2 = operator.index("X")
+            self.qc.h(qubit1)
+            self.qc.cx(qubit1, qubit2)
+            self.last_measure = None
+            return
         
         # SWAP gate
         if "SWAP" in operator:

@@ -27,8 +27,9 @@ gate_prob = {
         "S": 0.2
     },
     "two_qubit": {
-        "CNOT": 0.5,
-        "SWAP": 0.5
+        "CNOT": 0.25,
+        "SWAP": 0.25,
+        "H_CNOT": 0.5
     }
 }
 

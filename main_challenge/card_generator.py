@@ -59,6 +59,10 @@ def generate_operator():
         elif operation == "SWAP":
             card[index[0]] = "SWAP"
             card[index[1]] = "SWAP"
+        
+        elif operation == "H_CNOT":
+            card[index[0]] = "HC"
+            card[index[1]] = "X"
 
     return card
 
